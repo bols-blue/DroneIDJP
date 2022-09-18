@@ -39,7 +39,7 @@ void setup()
 
   // Initialise the Bluefruit module
   Bluefruit.begin();
-  Bluefruit.setTxPower(4);    // Check bluefruit.h for supported values
+  Bluefruit.setTxPower(8);    // Check bluefruit.h for supported values
 
   // Set the advertised device name (keep it short!)
   Bluefruit.setName("MyDroneIDJP");
@@ -50,9 +50,10 @@ void setup()
 
   // Setup the Heart Rate Monitor service using
   // BLEService and BLECharacteristic classes
-  Serial.println("Configuring the Heart Rate Monitor Service");
+  Serial.println("Configuring the DroneRID Service");
   setupTestService();
-
+  Bluefruit.printInfo();
+  Serial.println("Start ADV");
   // Set up and start advertising
   startAdv();
 
@@ -64,6 +65,7 @@ void startAdv(void)
   Bluefruit.Advertising.addFlags(BLE_GAP_ADV_FLAGS_LE_ONLY_GENERAL_DISC_MODE);
   Bluefruit.Advertising.addTxPower();
   Bluefruit.Advertising.addName();
+  Bluefruit.Advertising.setType(BLE_GAP_ADV_TYPE_EXTENDED_CONNECTABLE_NONSCANNABLE_UNDIRECTED);
 
   // Include HRM Service UUID
   Bluefruit.Advertising.addService(droneService);
@@ -71,6 +73,7 @@ void startAdv(void)
   Bluefruit.Advertising.restartOnDisconnect(true);
   Bluefruit.Advertising.setInterval(32, 244);    // in unit of 0.625 ms
   Bluefruit.Advertising.setFastTimeout(30);      // number of seconds in fast mode
+  Bluefruit.printInfo();
   Bluefruit.Advertising.start(0);                // 0 = Don't stop advertising after n seconds  
 
   // Create loop2() using Scheduler to run in 'parallel' with loop()
@@ -95,7 +98,7 @@ void setupTestService(void)
   RIDAuthCharacteristic = BLECharacteristic(RIDAuthCharacteristicUUID);
   RIDAuthCharacteristic.setProperties(CHR_PROPS_WRITE);
   RIDAuthCharacteristic.setPermission(SECMODE_OPEN, SECMODE_OPEN);
-  RIDAuthCharacteristic.setFixedLen(1);
+  RIDAuthCharacteristic.setFixedLen(32);
   RIDAuthCharacteristic.setUserDescriptor("RID Auth");
   RIDAuthCharacteristic.setWriteCallback(write_callback);
   RIDAuthCharacteristic.begin();
@@ -103,7 +106,7 @@ void setupTestService(void)
   RIDCommandCharacteristic = BLECharacteristic(RIDCommandCharacteristicUUID);
   RIDCommandCharacteristic.setProperties(CHR_PROPS_WRITE);
   RIDCommandCharacteristic.setPermission(SECMODE_OPEN, SECMODE_OPEN);
-  RIDCommandCharacteristic.setFixedLen(1);
+  RIDCommandCharacteristic.setFixedLen(176);
   RIDCommandCharacteristic.setUserDescriptor("RID Command");
   RIDCommandCharacteristic.setWriteCallback(write_callback);
   RIDCommandCharacteristic.begin();
@@ -111,7 +114,7 @@ void setupTestService(void)
   droneNotifyCharacteristic = BLECharacteristic(notifyCharacteristicUUID);
   droneNotifyCharacteristic.setProperties(CHR_PROPS_NOTIFY);
   droneNotifyCharacteristic.setPermission(SECMODE_OPEN, SECMODE_NO_ACCESS);
-  droneNotifyCharacteristic.setMaxLen(5);
+  droneNotifyCharacteristic.setFixedLen(176);
   droneNotifyCharacteristic.setUserDescriptor("RID Response");
   droneNotifyCharacteristic.setCccdWriteCallback(cccd_callback);  // Optionally capture CCCD updates
   droneNotifyCharacteristic.begin();
@@ -165,7 +168,7 @@ void write_callback(uint16_t conn_hdl, BLECharacteristic* chr, uint8_t* data, ui
 
 void loop() 
 {
-  uint8_t dronedata[5] = { 0x01, 0x02, 0x03, 0x04, 0x05 }; 
+  uint8_t dronedata[176] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x0 }; 
 
   if ( Bluefruit.connected() ) {      
 
